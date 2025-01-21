@@ -5,16 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Calendar</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <div class="calendar-container">
+        <div class="calendar-widget">
             <!-- Calendar Header -->
             <div class="calendar-header">
                 <h2 id="monthDisplay"></h2>
                 <div class="nav-buttons">
-                    <button id="prevMonth" class="nav-button">←</button>
-                    <button id="nextMonth" class="nav-button">→</button>
+                    <button id="prevMonth" class="nav-button">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="nextMonth" class="nav-button">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
 
@@ -22,21 +27,23 @@
             <div class="weekdays" id="weekdays"></div>
 
             <!-- Calendar Grid -->
-            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="calendar-grid" id="calendarDays"></div>
         </div>
 
         <!-- Task Modal -->
-        <div id="taskModal" class="modal">
+        <div class="modal" id="taskModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 id="modalDate"></h2>
-                    <button class="close-button" onclick="closeModal()">×</button>
+                    <h3>Tasks for <span id="selectedDate"></span></h3>
+                    <button class="close-button" id="closeModal">&times;</button>
                 </div>
-                <form id="taskForm" class="task-form">
-                    <input type="text" id="newTask" placeholder="Add new task...">
-                    <button type="submit">Add</button>
-                </form>
-                <div id="taskList" class="task-list"></div>
+                <div class="modal-body">
+                    <form id="taskForm" class="task-form">
+                        <input type="text" id="newTask" placeholder="Add new task...">
+                        <button type="submit">Add</button>
+                    </form>
+                    <div id="taskList" class="task-list"></div>
+                </div>
             </div>
         </div>
 
