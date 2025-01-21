@@ -15,6 +15,101 @@ let completedDates = new Set();
 let scheduledTasks = {};
 let monkeyPosition = 0;
 
+function initializeCalendar() {
+    const today = new Date();
+    renderCalendar(today.getFullYear(), today.getMonth());
+    setupTreeRungs();
+    loadProgress();
+}
+
+function renderCalendar(year, month) {
+    const calendarGrid = document.getElementById('calendarGrid');
+    const monthYearLabel = document.getElementById('currentMonthYear');
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    monthYearLabel.textContent = new Date(year, month).toLocaleString('default', { 
+        month: 'long', 
+        year: 'numeric' 
+    });
+
+    calendarGrid.innerHTML = '';
+
+    // Add weekday headers
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    weekdays.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'calendar-weekday';
+        dayHeader.textContent = day;
+        dayHeader.setAttribute('role', 'columnheader');
+        calendarGrid.appendChild(dayHeader);
+    });
+
+    // Add empty cells for days before first day of month
+    for (let i = 0; i < firstDay.getDay(); i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-date empty';
+        calendarGrid.appendChild(emptyCell);
+    }
+
+    // Add days of the month
+    for (let date = 1; date <= daysInMonth; date++) {
+        const dateCell = document.createElement('div');
+        dateCell.className = 'calendar-date';
+        dateCell.textContent = date;
+        
+        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+        
+        if (isToday(year, month, date)) {
+            dateCell.classList.add('today');
+        }
+        
+        if (completedDates.has(dateString)) {
+            dateCell.classList.add('completed');
+        }
+
+        dateCell.setAttribute('role', 'gridcell');
+        dateCell.setAttribute('tabindex', '0');
+        dateCell.setAttribute('aria-label', `${new Date(year, month, date).toLocaleDateString()}`);
+        
+        dateCell.addEventListener('click', () => {
+            window.location.href = `tasks.html?date=${dateString}`;
+        });
+
+        dateCell.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                window.location.href = `tasks.html?date=${dateString}`;
+            }
+        });
+
+        calendarGrid.appendChild(dateCell);
+    }
+}
+
+function setupTreeRungs() {
+    const tree = document.getElementById('tree');
+    const daysInMonth = new Date(
+        new Date().getFullYear(), 
+        new Date().getMonth() + 1, 
+        0
+    ).getDate();
+
+    tree.innerHTML = '';
+    for (let i = 0; i < daysInMonth; i++) {
+        const rung = document.createElement('div');
+        rung.className = 'tree-rung';
+        tree.appendChild(rung);
+    }
+}
+
+function isToday(year, month, date) {
+    const today = new Date();
+    return today.getDate() === date && 
+           today.getMonth() === month && 
+           today.getFullYear() === year;
+}
+
 function loadProgress() {
     const saved = localStorage.getItem('taskProgress');
     if (saved) {
@@ -151,11 +246,14 @@ function updateStreak() {
 
 function updateMonkeyPosition() {
     const monkey = document.getElementById('monkey');
-    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    const daysInMonth = new Date(
+        new Date().getFullYear(), 
+        new Date().getMonth() + 1, 
+        0
+    ).getDate();
     const percentPerRung = 100 / daysInMonth;
-    const newPosition = percentPerRung * monkeyPosition;
+    const newPosition = Math.min(percentPerRung * monkeyPosition, 100);
     monkey.style.bottom = `${newPosition}%`;
-    monkey.style.transition = 'bottom 0.5s ease';
 }
 
 function updateCalendar() {
@@ -286,9 +384,16 @@ function checkAndResetDaily() {
     }
 }
 
-window.onload = function() {
-    initializeTasks();
-    loadProgress();
-    checkAndResetDaily();
-    setInterval(checkAndResetDaily, 60000);
-}; 
+document.getElementById('prevMonth').addEventListener('click', () => {
+    const currentDate = new Date(document.getElementById('currentMonthYear').textContent);
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+});
+
+document.getElementById('nextMonth').addEventListener('click', () => {
+    const currentDate = new Date(document.getElementById('currentMonthYear').textContent);
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+});
+
+window.onload = initializeCalendar; 

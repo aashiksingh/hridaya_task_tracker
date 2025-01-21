@@ -36,9 +36,37 @@ body {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 400"><path d="M40,400 C40,300 60,300 60,400 L60,0 C60,100 40,100 40,0 Z" fill="%235c3f22"/>${Array.from({length: 31}, (_, i) => {const y = 400 - (i * (400/31));return `<path d="${i % 2 === 0 ? `M30,${y} C10,${y} 20,${y-15} 40,${y-15}`: `M70,${y} C90,${y} 80,${y-15} 60,${y-15}`}" stroke="%234CAF50" stroke-width="5" fill="none"/>`;}).join("")}</svg>');
-    background-size: cover;
-    border-radius: 10px;
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: space-between;
+}
+
+.tree-rung {
+    height: 2px;
+    background: #4CAF50;
+    position: relative;
+}
+
+.tree-rung::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #5c3f22;
+    border-radius: 50%;
+    left: -5px;
+    top: -4px;
+}
+
+.tree-rung::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #5c3f22;
+    border-radius: 50%;
+    right: -5px;
+    top: -4px;
 }
 
 .monkey {
@@ -95,50 +123,61 @@ body {
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    margin-top: 20px;
-    width: 300px;
+    width: 400px;
 }
 
 .calendar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
-.calendar-nav {
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-size: 20px;
-    padding: 5px 10px;
-}
-
-.calendar {
+.calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    gap: 2px;
+    background: #f0f0f0;
+    padding: 10px;
+    border-radius: 8px;
 }
 
-.calendar-day {
+.calendar-weekday {
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+    background: #4CAF50;
+    color: white;
+}
+
+.calendar-date {
     aspect-ratio: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f0f0f0;
-    border-radius: 5px;
-    font-size: 14px;
-    padding: 10px;
+    background: white;
+    border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
 }
 
-.calendar-day.today {
+.calendar-date:hover {
+    background: #e8f5e9;
+}
+
+.calendar-date.today {
     border: 2px solid #4CAF50;
+    font-weight: bold;
 }
 
-.calendar-day.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.calendar-date.completed::after {
+    content: '✓';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: #4CAF50;
+    font-size: 12px;
 }
 
 .streak-banner {
@@ -210,4 +249,26 @@ button:hover {
     to {
         transform: translateY(100vh) rotate(360deg);
     }
+}
+
+.home-button {
+    padding: 10px 20px;
+    font-size: 18px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.home-button:hover {
+    background: #45a049;
+}
+
+/* Tasks page specific styles */
+.tasks-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
 } 

@@ -8,32 +8,43 @@
 </head>
 <body>
     <div class="main-container">
-        <div class="task-section">
-            <h1>My Daily Tasks 📝</h1>
-            <ul class="task-list" id="taskList">
-                <!-- Tasks will be added here -->
-            </ul>
-            <button onclick="addTask()">Add New Task</button>
-            <div class="progress-text" id="progressText">Tasks: 0/0</div>
-        </div>
-        
-        <div class="game-section">
-            <div class="tree"></div>
-            <div class="monkey" id="monkey"></div>
+        <div class="calendar-section">
+            <h1>Task Calendar 📅</h1>
+            <div class="calendar" id="calendar">
+                <div class="calendar-header">
+                    <button class="calendar-nav" id="prevMonth" aria-label="Previous month">←</button>
+                    <h2 id="currentMonthYear"></h2>
+                    <button class="calendar-nav" id="nextMonth" aria-label="Next month">→</button>
+                </div>
+                <div class="calendar-grid" role="grid" id="calendarGrid">
+                    <!-- Calendar will be populated here -->
+                </div>
+            </div>
         </div>
 
-        <div class="rewards-section">
-            <h2>Rewards 🌟</h2>
-            <div class="stars" id="stars">⭐ × 0</div>
-            <div class="streak-banner" id="streakBanner">
-                🔥 Current Streak: 0 days
+        <div class="game-section">
+            <div class="tree" id="tree">
+                <!-- Tree rungs will be generated dynamically -->
             </div>
+            <div class="monkey" id="monkey" aria-label="Monkey progress indicator"></div>
         </div>
     </div>
 
-    <div class="calendar-section">
-        <h2>Progress Calendar 📅</h2>
-        <div class="calendar" id="calendar"></div>
+    <div class="task-section">
+        <h1>My Daily Tasks 📝</h1>
+        <ul class="task-list" id="taskList">
+            <!-- Tasks will be added here -->
+        </ul>
+        <button onclick="addTask()">Add New Task</button>
+        <div class="progress-text" id="progressText">Tasks: 0/0</div>
+    </div>
+
+    <div class="rewards-section">
+        <h2>Rewards 🌟</h2>
+        <div class="stars" id="stars">⭐ × 0</div>
+        <div class="streak-banner" id="streakBanner">
+            🔥 Current Streak: 0 days
+        </div>
     </div>
 
     <div class="celebration" id="celebration"></div>
