@@ -97,13 +97,22 @@ function celebrate() {
     
     updateStreak();
     
+    // Update monkey position based on completed dates in current month
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    const completedDatesThisMonth = Array.from(completedDates).filter(date => {
+        const dateObj = new Date(date);
+        return dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear;
+    });
+    
+    monkeyPosition = completedDatesThisMonth.length;
     stars += 5;
-    monkeyPosition++;
+    
     updateStars();
     updateMonkeyPosition();
-    
     createConfetti();
-    
     saveProgress();
     updateCalendar();
 }
@@ -153,9 +162,9 @@ function updateMonkeyPosition() {
     const monkey = document.getElementById('monkey');
     const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
     const percentPerRung = 100 / daysInMonth;
-    const newPosition = percentPerRung * monkeyPosition;
+    const newPosition = Math.min(percentPerRung * monkeyPosition, 100); // Ensure it doesn't go above 100%
     monkey.style.bottom = `${newPosition}%`;
-    monkey.style.transition = 'bottom 0.5s ease';
+    monkey.style.transition = 'bottom 0.5s ease-in-out';
 }
 
 function updateCalendar() {
@@ -272,11 +281,21 @@ function checkAndResetDaily() {
     const today = new Date().toISOString().split('T')[0];
 
     if (lastResetDate !== today) {
+        // Reset for new day
         const checkboxes = document.querySelectorAll('.task-checkbox');
         checkboxes.forEach(checkbox => {
             checkbox.checked = false;
             checkbox.parentElement.classList.remove('completed');
         });
+
+        // Reset monkey position if it's a new month
+        const lastResetMonth = lastResetDate ? new Date(lastResetDate).getMonth() : null;
+        const currentMonth = new Date().getMonth();
+        
+        if (lastResetMonth !== currentMonth) {
+            monkeyPosition = 0;
+            updateMonkeyPosition();
+        }
 
         completedTasks = 0;
         updateProgressText();

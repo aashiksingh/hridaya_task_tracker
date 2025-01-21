@@ -117,7 +117,8 @@ body {
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    gap: 8px;
+    width: 100%;
 }
 
 .calendar-day {
@@ -128,17 +129,19 @@ body {
     background: #f0f0f0;
     border-radius: 5px;
     font-size: 14px;
-    padding: 10px;
     cursor: pointer;
+    border: 1px solid #ddd;
+    padding: 0;
+    min-height: 35px;
+}
+
+.calendar-day.completed {
+    background: #d4edda;
 }
 
 .calendar-day.today {
     border: 2px solid #4CAF50;
-}
-
-.calendar-day.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    font-weight: bold;
 }
 
 .streak-banner {
