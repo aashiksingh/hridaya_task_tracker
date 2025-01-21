@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monkey Task Tracker</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #98ff98;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .task-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+
+        .game-section {
+            position: relative;
+            width: 200px;
+            height: 400px;
+        }
+
+        .tree {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 400">
+                <path d="M40,400 C40,300 60,300 60,400 L60,0 C60,100 40,100 40,0 Z" fill="%235c3f22"/>
+                ${Array.from({length: 31}, (_, i) => {
+                    const y = 400 - (i * (400/31));
+                    return `<path d="${i % 2 === 0 
+                        ? `M30,${y} C10,${y} 20,${y-15} 40,${y-15}`
+                        : `M70,${y} C90,${y} 80,${y-15} 60,${y-15}`}" 
+                        stroke="%234CAF50" stroke-width="5" fill="none"/>`;
+                }).join('')}
+            </svg>');
+            background-size: cover;
+            border-radius: 10px;
+        }
+
+        .monkey {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            transition: bottom 0.5s ease;
+            bottom: 0;
+        }
+
+        .monkey::before {
+            content: '🐒';
+            font-size: 40px;
+            position: absolute;
+            left: 5px;
+            top: 5px;
+            animation: swingAround 1s infinite alternate;
+        }
+
+        @keyframes swingAround {
+            0% { transform: rotate(-5deg); }
+            100% { transform: rotate(5deg); }
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .task-item.completed {
+            background: #d4edda;
+        }
+
+        .task-checkbox {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .calendar-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            width: 300px;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover {
+            background: #e0e0e0;
+            transform: scale(1.1);
+        }
+
+        .calendar-day.completed {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .streak-banner {
+            background: #ffd700;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .rewards-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            width: 300px;
+        }
+
+        .stars {
+            font-size: 24px;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffd700;
+            animation: fall 3s linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="task-section">
+            <h1>My Daily Tasks 📝</h1>
+            <ul class="task-list" id="taskList">
+                <!-- Tasks will be added here -->
+            </ul>
+            <button onclick="addTask()">Add New Task</button>
+            <div class="progress-text" id="progressText">Tasks: 0/0</div>
+        </div>
+        
+        <div class="game-section">
+            <div class="tree"></div>
+            <div class="monkey" id="monkey"></div>
+        </div>
+
+        <div class="rewards-section">
+            <h2>Rewards 🌟</h2>
+            <div class="stars" id="stars">⭐ × 0</div>
+            <div class="streak-banner" id="streakBanner">
+                🔥 Current Streak: 0 days
+            </div>
+        </div>
+    </div>
+
+    <div class="calendar-section">
+        <h2>Progress Calendar 📅</h2>
+        <div class="calendar" id="calendar"></div>
+    </div>
+
+    <div class="celebration" id="celebration"></div>
+
+    <audio id="completionSound" src="data:audio/wav;base64,UklGRnQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU8GAACAPgM+AD4ARABEAEQASAA+AD4APgA+AEQARABEAEgAPgA+AD4APgBEAEQARABIAD4APgA+AD4ARABEAEQASABIAEgASABIAEQARABEAEQASABIAEgASABEAEQARABEAEgASABIAEgARABEAEQARABIAEgASABIAEQARABEAEQA" preload="auto"></audio>
+    <audio id="stepSound" src="data:audio/wav;base64,UklGRiwDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQkDAACBPwE/AD8APwA/AD8APwA/AD8APwA/AD8APwA/AD8APwA/AD8APwA/AD8APwA/AD8APwA/AD8APwA/" preload="auto"></audio>
+
+    <script>
+        const tasks = {
+            default: [
+                "Make my bed",
+                "Brush teeth",
+                "Get dressed",
+                "Eat breakfast",
+                "Pack school bag"
+            ]
+        };
+
+        let completedTasks = 0;
+        let stars = 0;
+        let currentStreak = 0;
+        let completedDates = new Set();
+        let scheduledTasks = {};
+        let monkeyPosition = 0; // Current rung position of monkey
+
+        // Initialize from localStorage
+        function loadProgress() {
+            const saved = localStorage.getItem('taskProgress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                stars = data.stars || 0;
+                currentStreak = data.streak || 0;
+                completedDates = new Set(data.completedDates || []);
+                scheduledTasks = data.scheduledTasks || {};
+                monkeyPosition = data.monkeyPosition || 0;
+                updateStars();
+                updateStreak();
+                updateCalendar();
+                updateMonkeyPosition();
+            }
+        }
+
+        function saveProgress() {
+            const data = {
+                stars: stars,
+                streak: currentStreak,
+                completedDates: Array.from(completedDates),
+                scheduledTasks: scheduledTasks,
+                monkeyPosition: monkeyPosition
+            };
+            localStorage.setItem('taskProgress', JSON.stringify(data));
+        }
+
+        function initializeTasks() {
+            const today = new Date().toISOString().split('T')[0];
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            
+            // Get tasks for today (scheduled or default)
+            const todaysTasks = scheduledTasks[today] || [...tasks.default];
+            
+            todaysTasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+                li.innerHTML = `
+                    <input type="checkbox" class="task-checkbox" onchange="updateProgress(this)">
+                    <span>${task}</span>
+                `;
+                taskList.appendChild(li);
+            });
+            updateProgressText();
+        }
+
+        function updateProgress(checkbox) {
+            const taskItem = checkbox.parentElement;
+            const stepSound = document.getElementById('stepSound');
+            
+            if (checkbox.checked) {
+                taskItem.classList.add('completed');
+                stepSound.currentTime = 0;
+                stepSound.play();
+            } else {
+                taskItem.classList.remove('completed');
+            }
+
+            const checkboxes = document.querySelectorAll('.task-checkbox');
+            completedTasks = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const totalTasks = checkboxes.length;
+            const progress = (completedTasks / totalTasks) * 100;
+            
+            // Update monkey position with animation
+            const monkey = document.getElementById('monkey');
+            monkey.style.bottom = `${progress}%`;
+            
+            updateProgressText();
+            
+            if (completedTasks === totalTasks) {
+                celebrate();
+            }
+        }
+
+        function updateProgressText() {
+            const totalTasks = document.querySelectorAll('.task-checkbox').length;
+            document.getElementById('progressText').textContent = `Tasks: ${completedTasks}/${totalTasks}`;
+        }
+
+        function celebrate() {
+            const completionSound = document.getElementById('completionSound');
+            completionSound.play();
+
+            // Add today to completed dates
+            const today = new Date().toISOString().split('T')[0];
+            completedDates.add(today);
+            
+            // Update streak
+            updateStreak();
+            
+            // Add stars
+            stars += 5;
+            updateStars();
+            
+            // Create confetti
+            createConfetti();
+            
+            // Save progress
+            saveProgress();
+            
+            // Update calendar
+            updateCalendar();
+        }
+
+        function createConfetti() {
+            const celebration = document.getElementById('celebration');
+            celebration.style.display = 'block';
+            celebration.innerHTML = '';
+
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                celebration.appendChild(confetti);
+            }
+
+            setTimeout(() => {
+                celebration.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateStars() {
+            document.getElementById('stars').textContent = `⭐ × ${stars}`;
+        }
+
+        function updateStreak() {
+            const dates = Array.from(completedDates).sort();
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+            if (dates.includes(today)) {
+                if (dates.includes(yesterday)) {
+                    currentStreak++;
+                } else {
+                    currentStreak = 1;
+                }
+            }
+
+            const streakBanner = document.getElementById('streakBanner');
+            streakBanner.textContent = `🔥 Current Streak: ${currentStreak} days`;
+            streakBanner.style.display = 'block';
+        }
+
+        function updateCalendar() {
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            // Add day headers
+            ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-day';
+                dayHeader.textContent = day;
+                calendar.appendChild(dayHeader);
+            });
+
+            // Add empty cells for days before first day of month
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day';
+                calendar.appendChild(emptyDay);
+            }
+
+            // Add days
+            for (let date = 1; date <= lastDay.getDate(); date++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = date;
+
+                const dateString = new Date(today.getFullYear(), today.getMonth(), date).toISOString().split('T')[0];
+                if (completedDates.has(dateString)) {
+                    dayElement.classList.add('completed');
+                }
+
+                // Make future dates clickable for task scheduling
+                const currentDate = new Date(dateString);
+                if (currentDate >= new Date().setHours(0,0,0,0)) {
+                    dayElement.style.cursor = 'pointer';
+                    dayElement.title = 'Click to add tasks for this day';
+                    dayElement.onclick = () => addTask(dateString);
+                }
+
+                // Show indicator if tasks are scheduled
+                if (scheduledTasks[dateString]) {
+                    dayElement.style.border = '2px solid #4CAF50';
+                }
+
+                calendar.appendChild(dayElement);
+            }
+        }
+
+        function addTask(date = null) {
+            const taskName = prompt('What task would you like to add?');
+            if (!taskName) return;
+
+            if (date) {
+                // Schedule task for future date
+                if (!scheduledTasks[date]) {
+                    scheduledTasks[date] = [...tasks.default];
+                }
+                scheduledTasks[date].push(taskName);
+                saveProgress();
+                updateCalendar();
+            } else {
+                // Add task for today
+                const today = new Date().toISOString().split('T')[0];
+                if (!scheduledTasks[today]) {
+                    scheduledTasks[today] = [...tasks.default];
+                }
+                scheduledTasks[today].push(taskName);
+                
+                // Adjust monkey position for new task
+                const monkey = document.getElementById('monkey');
+                const currentProgress = (completedTasks / (scheduledTasks[today].length - 1)) * 100;
+                const newProgress = (completedTasks / scheduledTasks[today].length) * 100;
+                monkey.style.bottom = `${newProgress}%`;
+                
+                initializeTasks();
+                saveProgress();
+            }
+        }
+    
+
+        function updateMonkeyPosition() {
+            const monkey = document.getElementById('monkey');
+            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+            const percentPerRung = 100 / daysInMonth;
+            const newPosition = percentPerRung * monkeyPosition;
+            monkey.style.bottom = `${newPosition}%`;
+        }
+
+        function checkAndResetDaily() {
+            const lastResetDate = localStorage.getItem('lastResetDate');
+            const today = new Date().toISOString().split('T')[0];
+
+            if (lastResetDate !== today) {
+                // Check yesterday's completion status
+                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                const checkboxes = document.querySelectorAll('.task-checkbox');
+                const allCompleted = Array.from(checkboxes).every(cb => cb.checked);
+                
+                // Update monkey position based on yesterday's completion
+                const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+                if (allCompleted) {
+                    monkeyPosition = Math.min(monkeyPosition + 1, daysInMonth);
+                } else {
+                    monkeyPosition = Math.max(monkeyPosition - 1, 0);
+                }
+                
+                // Reset checkboxes for new day
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.parentElement.classList.remove('completed');
+                });
+
+                // Reset completed tasks counter
+                completedTasks = 0;
+                updateProgressText();
+                
+                // Update monkey visual position
+                updateMonkeyPosition();
+
+                // Store new reset date
+                localStorage.setItem('lastResetDate', today);
+                saveProgress();
+            }
+        }
+
+        // Initialize everything when page loads
+        window.onload = function() {
+            initializeTasks();
+            loadProgress();
+            checkAndResetDaily();
+            
+            // Check for reset every minute
+            setInterval(checkAndResetDaily, 60000);
+        };
+    </script>
+</body>
+</html>
