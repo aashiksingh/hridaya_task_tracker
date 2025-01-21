@@ -3,37 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monkey Task Tracker</title>
+    <title>Task Calendar</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <div class="calendar-container">
-            <h1>Task Calendar 📅</h1>
-            <div class="calendar">
-                <div class="calendar-header">
+            <!-- Calendar Header -->
+            <div class="calendar-header">
+                <h2 id="monthDisplay"></h2>
+                <div class="nav-buttons">
                     <button id="prevMonth" class="nav-button">←</button>
-                    <h2 id="monthDisplay"></h2>
                     <button id="nextMonth" class="nav-button">→</button>
                 </div>
-                <div class="weekdays">
-                    <div>Mon</div>
-                    <div>Tue</div>
-                    <div>Wed</div>
-                    <div>Thu</div>
-                    <div>Fri</div>
-                    <div>Sat</div>
-                    <div>Sun</div>
+            </div>
+
+            <!-- Days of Week -->
+            <div class="weekdays" id="weekdays"></div>
+
+            <!-- Calendar Grid -->
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <!-- Task Modal -->
+        <div id="taskModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalDate"></h2>
+                    <button class="close-button" onclick="closeModal()">×</button>
                 </div>
-                <div id="calendar-days" class="days"></div>
+                <form id="taskForm" class="task-form">
+                    <input type="text" id="newTask" placeholder="Add new task...">
+                    <button type="submit">Add</button>
+                </form>
+                <div id="taskList" class="task-list"></div>
             </div>
         </div>
 
         <div class="game-section">
-            <div class="tree" id="tree">
-                <!-- Tree rungs will be generated dynamically -->
-            </div>
-            <div class="monkey" id="monkey" aria-label="Monkey progress indicator"></div>
+            <div class="tree" id="tree"></div>
+            <div class="monkey" id="monkey"></div>
         </div>
     </div>
 
