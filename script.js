@@ -25,65 +25,85 @@ function initializeCalendar() {
 function renderCalendar(year, month) {
     const calendarGrid = document.getElementById('calendarGrid');
     const monthYearLabel = document.getElementById('currentMonthYear');
+    
+    // Get first day of current month
     const firstDay = new Date(year, month, 1);
+    // Get last day of current month
     const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
+    // Get last day of previous month
+    const prevMonthLastDay = new Date(year, month, 0);
     
     monthYearLabel.textContent = new Date(year, month).toLocaleString('default', { 
-        month: 'long', 
-        year: 'numeric' 
+        month: 'long',
+        year: 'numeric'
     });
 
     calendarGrid.innerHTML = '';
 
-    // Add weekday headers
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    // Add weekday headers (MON to SUN)
+    const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     weekdays.forEach(day => {
         const dayHeader = document.createElement('div');
         dayHeader.className = 'calendar-weekday';
         dayHeader.textContent = day;
-        dayHeader.setAttribute('role', 'columnheader');
         calendarGrid.appendChild(dayHeader);
     });
 
-    // Add empty cells for days before first day of month
-    for (let i = 0; i < firstDay.getDay(); i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-date empty';
-        calendarGrid.appendChild(emptyCell);
-    }
+    // Calculate first Monday to display (might be from previous month)
+    let firstMonday = new Date(firstDay);
+    firstMonday.setDate(firstMonday.getDate() - firstMonday.getDay() + (firstMonday.getDay() === 0 ? -6 : 1));
 
-    // Add days of the month
-    for (let date = 1; date <= daysInMonth; date++) {
+    // Generate 6 weeks of dates
+    for (let i = 0; i < 42; i++) {
+        const currentDate = new Date(firstMonday);
+        currentDate.setDate(firstMonday.getDate() + i);
+        
         const dateCell = document.createElement('div');
         dateCell.className = 'calendar-date';
-        dateCell.textContent = date;
         
-        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+        const dateNumber = document.createElement('span');
+        dateNumber.className = 'date-number';
         
-        if (isToday(year, month, date)) {
-            dateCell.classList.add('today');
-        }
-        
-        if (completedDates.has(dateString)) {
-            dateCell.classList.add('completed');
+        // Add ordinal indicator (st, nd, rd, th)
+        const day = currentDate.getDate();
+        const ordinal = getOrdinalSuffix(day);
+        dateNumber.textContent = `${day}${ordinal}`;
+
+        // Style dates from other months
+        if (currentDate.getMonth() !== month) {
+            dateCell.classList.add('empty');
+            dateNumber.classList.add('other-month');
+            if (currentDate.getMonth() < month || (currentDate.getMonth() === 11 && month === 0)) {
+                dateNumber.textContent += '\nDecember';
+            } else {
+                dateNumber.textContent += '\nFebruary';
+            }
         }
 
-        dateCell.setAttribute('role', 'gridcell');
-        dateCell.setAttribute('tabindex', '0');
-        dateCell.setAttribute('aria-label', `${new Date(year, month, date).toLocaleDateString()}`);
+        // Highlight today
+        if (isToday(year, month, day)) {
+            dateCell.classList.add('today');
+        }
+
+        dateCell.appendChild(dateNumber);
         
+        // Add click event
+        const dateString = currentDate.toISOString().split('T')[0];
         dateCell.addEventListener('click', () => {
             window.location.href = `tasks.html?date=${dateString}`;
         });
 
-        dateCell.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                window.location.href = `tasks.html?date=${dateString}`;
-            }
-        });
-
         calendarGrid.appendChild(dateCell);
+    }
+}
+
+function getOrdinalSuffix(day) {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+        case 1:  return 'st';
+        case 2:  return 'nd';
+        case 3:  return 'rd';
+        default: return 'th';
     }
 }
 
