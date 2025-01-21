@@ -33,6 +33,10 @@
             position: relative;
             width: 200px;
             height: 400px;
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         .tree {
@@ -111,11 +115,25 @@
             width: 300px;
         }
 
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-nav {
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 20px;
+            padding: 5px 10px;
+        }
+
         .calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 5px;
-            margin-top: 10px;
         }
 
         .calendar-day {
@@ -125,18 +143,18 @@
             justify-content: center;
             background: #f0f0f0;
             border-radius: 5px;
-            font-size: 12px;
-            transition: all 0.3s ease;
+            font-size: 14px;
+            padding: 10px;
+            cursor: pointer;
         }
 
-        .calendar-day:hover {
-            background: #e0e0e0;
-            transform: scale(1.1);
+        .calendar-day.today {
+            border: 2px solid #4CAF50;
         }
 
-        .calendar-day.completed {
-            background: #4CAF50;
-            color: white;
+        .calendar-day.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .streak-banner {
@@ -418,53 +436,94 @@
 
         function updateCalendar() {
             const calendar = document.getElementById('calendar');
-            calendar.innerHTML = '';
-
             const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            let currentMonth = today.getMonth();
+            let currentYear = today.getFullYear();
 
-            // Add day headers
-            ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].forEach(day => {
-                const dayHeader = document.createElement('div');
-                dayHeader.className = 'calendar-day';
-                dayHeader.textContent = day;
-                calendar.appendChild(dayHeader);
-            });
+            function renderCalendar(month, year) {
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const todayDate = new Date().toISOString().split('T')[0];
 
-            // Add empty cells for days before first day of month
-            for (let i = 0; i < firstDay.getDay(); i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.className = 'calendar-day';
-                calendar.appendChild(emptyDay);
+                calendar.innerHTML = `
+                    <div class="calendar-header">
+                        <button class="calendar-nav" onclick="previousMonth()">←</button>
+                        <h3>${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}</h3>
+                        <button class="calendar-nav" onclick="nextMonth()">→</button>
+                    </div>
+                    <div class="calendar-days"></div>
+                `;
+
+                const calendarDays = calendar.querySelector('.calendar-days');
+
+                // Add day headers
+                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'calendar-day';
+                    dayHeader.style.background = 'none';
+                    dayHeader.style.fontWeight = 'bold';
+                    dayHeader.textContent = day;
+                    calendarDays.appendChild(dayHeader);
+                });
+
+                // Add empty cells for days before first day of month
+                for (let i = 0; i < firstDay.getDay(); i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'calendar-day';
+                    emptyDay.style.background = 'none';
+                    calendarDays.appendChild(emptyDay);
+                }
+
+                // Add days
+                for (let date = 1; date <= lastDay.getDate(); date++) {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day';
+                    dayElement.textContent = date;
+
+                    const dateString = new Date(year, month, date).toISOString().split('T')[0];
+                    
+                    if (dateString === todayDate) {
+                        dayElement.classList.add('today');
+                    }
+
+                    if (completedDates.has(dateString)) {
+                        dayElement.classList.add('completed');
+                    }
+
+                    // Only allow selecting today or future dates
+                    if (dateString >= todayDate) {
+                        dayElement.onclick = () => addTask(dateString);
+                        if (scheduledTasks[dateString]) {
+                            dayElement.style.border = '2px solid #4CAF50';
+                        }
+                    } else {
+                        dayElement.classList.add('disabled');
+                    }
+
+                    calendarDays.appendChild(dayElement);
+                }
             }
 
-            // Add days
-            for (let date = 1; date <= lastDay.getDate(); date++) {
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day';
-                dayElement.textContent = date;
+            renderCalendar(currentMonth, currentYear);
 
-                const dateString = new Date(today.getFullYear(), today.getMonth(), date).toISOString().split('T')[0];
-                if (completedDates.has(dateString)) {
-                    dayElement.classList.add('completed');
+            // Add these functions to window scope
+            window.previousMonth = () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
                 }
+                renderCalendar(currentMonth, currentYear);
+            };
 
-                // Make future dates clickable for task scheduling
-                const currentDate = new Date(dateString);
-                if (currentDate >= new Date().setHours(0,0,0,0)) {
-                    dayElement.style.cursor = 'pointer';
-                    dayElement.title = 'Click to add tasks for this day';
-                    dayElement.onclick = () => addTask(dateString);
+            window.nextMonth = () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
                 }
-
-                // Show indicator if tasks are scheduled
-                if (scheduledTasks[dateString]) {
-                    dayElement.style.border = '2px solid #4CAF50';
-                }
-
-                calendar.appendChild(dayElement);
-            }
+                renderCalendar(currentMonth, currentYear);
+            };
         }
 
         function addTask(date = null) {
@@ -517,14 +576,14 @@
                 const checkboxes = document.querySelectorAll('.task-checkbox');
                 const allCompleted = Array.from(checkboxes).every(cb => cb.checked);
                 
-                // Update monkey position based on yesterday's completion
-                const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
                 if (allCompleted) {
+                    // Move monkey up one position
+                    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
                     monkeyPosition = Math.min(monkeyPosition + 1, daysInMonth);
-                } else {
-                    monkeyPosition = Math.max(monkeyPosition - 1, 0);
+                    const monkey = document.getElementById('monkey');
+                    monkey.style.bottom = `${(monkeyPosition / daysInMonth) * 100}%`;
                 }
-                
+
                 // Reset checkboxes for new day
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = false;
@@ -535,9 +594,6 @@
                 completedTasks = 0;
                 updateProgressText();
                 
-                // Update monkey visual position
-                updateMonkeyPosition();
-
                 // Store new reset date
                 localStorage.setItem('lastResetDate', today);
                 saveProgress();
